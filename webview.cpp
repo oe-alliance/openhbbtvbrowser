@@ -7,6 +7,7 @@
 #include <QWebEngineScript>
 #include <QWebEngineScriptCollection>
 #include <QWebEngineHistory>
+#include <QFileInfo>
 
 WebView::WebView(QWidget *parent)
     : QWebEngineView(parent), m_quitMsg(new QLabel), m_quitMsgStatus(0)
@@ -28,40 +29,53 @@ WebView::WebView(QWidget *parent)
 
 void WebView::injectHbbTVScripts(const QString &src)
 {
-    QWebEngineScript script;
+    QString normalized = src;
+    if (normalized.startsWith("qrc:/")) {
+        normalized.replace(0, 4, ":");   // "qrc:/foo.js" -> ":/foo.js"
+    } else if (normalized.startsWith(":/")) {
+        // già pronto per QFile
+    } else if (QFileInfo(normalized).isRelative()) {
+        // se è relativo, lo trasformo in qrc
+        normalized.prepend(":/");
+    }
+    QFile polyfill(normalized);
+    if (polyfill.open(QIODevice::ReadOnly)) {
+        QString source = QString::fromUtf8(polyfill.readAll());
+        polyfill.close();
 
-    QString s = QString::fromLatin1("(function() {"
-                                    "  var element = document.createElement('script');"
-                                    "  element.setAttribute('type', 'text/javascript');"
-                                    "  element.setAttribute('src', '%1');"
-                                    "  document.head.appendChild(element);"
-                                    "})();").arg(src);
+        QWebEngineScript script;
+        script.setName("hbbtv_polyfill");
+        script.setSourceCode(source);
+        script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+        script.setRunsOnSubFrames(true);
+        script.setWorldId(QWebEngineScript::MainWorld);
+        page()->scripts().insert(script);
 
-    script.setName("hbbtv_polyfill");
-    script.setSourceCode(s);
-    script.setInjectionPoint(QWebEngineScript::DocumentReady);
-    script.setRunsOnSubFrames(true);
-    script.setWorldId(QWebEngineScript::MainWorld);
-    page()->scripts().insert(script);
+        qDebug() << "[HbbTV] Injected polyfill from" << src;
+    } else {
+        qWarning() << "[HbbTV] Polyfill not found:" << src;
+    }
 }
 
 void WebView::injectXmlHttpRequestScripts()
 {
-    QWebEngineScript script;
+    QFile quirks(":/xmlhttprequest_quirks.js");
+    if (quirks.open(QIODevice::ReadOnly)) {
+        QString source = QString::fromUtf8(quirks.readAll());
+        quirks.close();
 
-    QString s = QString::fromLatin1("(function() {"
-                                    "  var element = document.createElement('script');"
-                                    "  element.setAttribute('type','text/javascript');"
-                                    "  element.setAttribute('src','qrc:/xmlhttprequest_quirks.js');"
-                                    "  document.head.appendChild(element);"
-                                    "})()");
+        QWebEngineScript script;
+        script.setName("xmlhttprequest_quirks");
+        script.setSourceCode(source);
+        script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+        script.setRunsOnSubFrames(true);
+        script.setWorldId(QWebEngineScript::MainWorld);
+        page()->scripts().insert(script);
 
-    script.setName("xmlhttprequest_quirks");
-    script.setSourceCode(s);
-    script.setInjectionPoint(QWebEngineScript::DocumentReady);
-    script.setRunsOnSubFrames(true);
-    script.setWorldId(QWebEngineScript::MainWorld);
-    page()->scripts().insert(script);
+        qDebug() << "[HbbTV] xmlhttprequest_quirks injected via QWebEngineScript";
+    } else {
+        qWarning() << "[HbbTV] xmlhttprequest_quirks.js not found in qrc";
+    }
 }
 
 void WebView::setCurrentChannel(const int &onid, const int &tsid, const int &sid)
