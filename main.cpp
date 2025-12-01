@@ -108,12 +108,19 @@ int main(int argc, char *argv[])
     int sid = -1;
 
     QCommandLineParser parser;
+    parser.setApplicationDescription("OpenHbbTVBrowser");
     parser.addOption(QCommandLineOption("src", "Script Src", "src"));
     parser.addOption(QCommandLineOption("onid", "Original Network ID", "onid"));
     parser.addOption(QCommandLineOption("tsid", "Transport Stream ID", "tsid"));
     parser.addOption(QCommandLineOption("sid", "Service ID", "sid"));
     parser.addOption(QCommandLineOption("enable-script-debugging", "EnableScript Debugging", "enable-script-debugging"));
+    parser.addHelpOption();
+    parser.addVersionOption();
     parser.parse(QCoreApplication::arguments());
+    if (parser.isSet("help"))
+        parser.showHelp();
+    if (parser.isSet("version"))
+        parser.showVersion();
     if (parser.isSet("src"))
         src = parser.value("src");
     if (parser.isSet("onid"))
