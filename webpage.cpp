@@ -20,5 +20,28 @@ void WebPage::javaScriptConsoleMessage(WebPage::JavaScriptConsoleMessageLevel le
                                        int lineId,
                                        const QString &sourceId)
 {
-    QWebEnginePage::javaScriptConsoleMessage(level, message, lineId, sourceId);
+//    QWebEnginePage::javaScriptConsoleMessage(level, message, lineId, sourceId);
+    QString levelStr;
+    switch (level) {
+    case InfoMessageLevel:    levelStr = "INFO"; break;
+    case WarningMessageLevel: levelStr = "WARNING"; break;
+    case ErrorMessageLevel:   levelStr = "ERROR"; break;
+    }
+
+    if (level == ErrorMessageLevel) {
+        qCritical().noquote() << QString("[JS %1] %2 (line %3, source %4)")
+                                 .arg(levelStr, message)
+                                 .arg(lineId)
+                                 .arg(sourceId);
+    } else if (level == WarningMessageLevel) {
+        qWarning().noquote() << QString("[JS %1] %2 (line %3, source %4)")
+                                 .arg(levelStr, message)
+                                 .arg(lineId)
+                                 .arg(sourceId);
+    } else {
+        qDebug().noquote() << QString("[JS %1] %2 (line %3, source %4)")
+                              .arg(levelStr, message)
+                              .arg(lineId)
+                              .arg(sourceId);
+    }
 }
