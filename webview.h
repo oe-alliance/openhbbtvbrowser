@@ -3,6 +3,17 @@
 
 #include <QWebEngineView>
 #include <QLabel>
+#include <QWebEngineUrlRequestInterceptor>
+
+//LOG all requests
+class RequestLogger : public QWebEngineUrlRequestInterceptor {
+public:
+    void interceptRequest(QWebEngineUrlRequestInfo &info) override {
+        qDebug().noquote() << "[NET] Request:"
+                           << info.requestMethod()
+                           << info.requestUrl().toString();
+    }
+};
 
 class WebView : public QWebEngineView
 {

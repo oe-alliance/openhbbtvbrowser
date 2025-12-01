@@ -113,6 +113,7 @@ int main(int argc, char *argv[])
     parser.addOption(QCommandLineOption("onid", "Original Network ID", "onid"));
     parser.addOption(QCommandLineOption("tsid", "Transport Stream ID", "tsid"));
     parser.addOption(QCommandLineOption("sid", "Service ID", "sid"));
+    parser.addOption(QCommandLineOption("enable-netlog", "Enable HTTP request logging"));
     parser.addOption(QCommandLineOption("enable-script-debugging", "EnableScript Debugging", "enable-script-debugging"));
     parser.addHelpOption();
     parser.addVersionOption();
@@ -130,6 +131,7 @@ int main(int argc, char *argv[])
     if (parser.isSet("sid"))
         sid = parser.value("sid").toInt();
     bool scriptDebugging = parser.isSet("enable-script-debugging");
+    bool enableNetlog = parser.isSet("enable-netlog");
 
     QUrl url = commandLineUrlArgument();
 
@@ -159,6 +161,11 @@ int main(int argc, char *argv[])
     app.installEventFilter(filter);
     QObject::connect(filter, &WindowEventFilter::activate, window->webView(), &WebView::sendKeyEvent);
 #endif
+
+    if (enableNetlog) {
+        qDebug() << "[NET] RequestLogger enabled";
+        window->webView()->page()->profile()->setUrlRequestInterceptor(new RequestLogger());
+    }
 
     return app.exec();
 }
