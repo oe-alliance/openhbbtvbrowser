@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
     parser.addOption(QCommandLineOption("onid", "Original Network ID", "onid"));
     parser.addOption(QCommandLineOption("tsid", "Transport Stream ID", "tsid"));
     parser.addOption(QCommandLineOption("sid", "Service ID", "sid"));
+    parser.addOption(QCommandLineOption("enable-script-debugging", "EnableScript Debugging"));
     parser.addOption(QCommandLineOption("enable-netlog", "Enable HTTP request logging"));
-    parser.addOption(QCommandLineOption("enable-script-debugging", "EnableScript Debugging", "enable-script-debugging"));
     parser.addHelpOption();
     parser.addVersionOption();
     parser.parse(QCoreApplication::arguments());
